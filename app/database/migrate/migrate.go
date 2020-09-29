@@ -1,13 +1,14 @@
 package migrate
 
 import (
-	"database/sql"
 	"io/ioutil"
 	"log"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // DropAllTables will empty the database
-func DropAllTables(db *sql.DB) {
+func DropAllTables(db *sqlx.DB) {
 	query := `
 		DO $$ DECLARE
 			r RECORD;
@@ -20,20 +21,17 @@ func DropAllTables(db *sql.DB) {
 				END LOOP;
 		END $$;
 	`
-	if _, err := db.Exec(query); err != nil {
-		log.Fatal(err)
-	}
+
+	db.MustExec(query)
 }
 
 // ImportTables will import all tables from app/database/data.sql
-func ImportTables(db *sql.DB) {
+func ImportTables(db *sqlx.DB) {
 	content, err := ioutil.ReadFile("app/database/data.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	query := string(content)
-	if _, err := db.Exec(query); err != nil {
-		log.Fatal(err)
-	}
+	db.MustExec(query)
 }

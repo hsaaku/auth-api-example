@@ -1,17 +1,22 @@
 package app
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 
+	"github.com/jmoiron/sqlx"
+
+	"github.com/gorilla/mux"
 	"hsaaku.com/auth-api/app/database/migrate"
+	"hsaaku.com/auth-api/app/routes"
 	"hsaaku.com/auth-api/config"
 )
 
 // App holds app instance
 type App struct {
-	DB *sql.DB
+	DB     *sqlx.DB
+	Router *mux.Router
 }
 
 // Initialize will open the database connection
@@ -25,25 +30,20 @@ func (a *App) Initialize(config *config.Config) {
 		config.DB.Host,
 		config.DB.Port,
 	)
+	a.DB = sqlx.MustConnect("postgres", dsn)
+	a.DB.SetMaxIdleConns(10)
+	a.DB.SetMaxOpenConns(10)
 
-	var err error
-
-	a.DB, err = sql.Open("postgres", dsn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer a.DB.Close()
-
-	err = a.DB.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Running database migrations...")
+	// Resetting database
 	migrate.DropAllTables(a.DB)
 	migrate.ImportTables(a.DB)
-	fmt.Println("Database migrated successfully")
 
-	fmt.Println("DB connected!")
+	a.Router = mux.NewRouter()
+
+	routes.InitializeRoutes(a.DB, a.Router)
+}
+
+// Run the app
+func (a *App) Run(addr string) {
+	log.Fatal(http.ListenAndServe(addr, a.Router))
 }

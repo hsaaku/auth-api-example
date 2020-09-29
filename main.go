@@ -9,13 +9,17 @@ import (
 func main() {
 	config := config.GetConfig()
 
+	// messages := []model.Message{
+	// 	model.Message{"Hai"},
+	// 	model.Message{"Siewuir"},
+	// 	model.Message{"fsdkjo safaisf sodjf"},
+	// }
+	// for _, msg := range messages {
+	// 	fmt.Println(msg.Message)
+	// }
+
 	a := &app.App{}
 	a.Initialize(config)
 
-	// err := a.DB.Ping()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// a.Run(":4000")
+	a.Run(":4000")
 }
